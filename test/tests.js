@@ -4,8 +4,7 @@
     var default_settings;
 
     default_settings = {
-        providers: [ 'provider-a', 'provider-b', 'provider-c' ],
-        default_ttl: 20
+        providers: [ 'a', 'b', 'c' ]
     };
 
     module('do_init');
@@ -34,15 +33,13 @@
     }
 
     test('init', test_do_init({
-        setup: function(i) {
-            console.log(i);
+        setup: function() {
         },
         verify: function(i) {
-            console.log(i);
             equal(i.config.requireProvider.callCount, 3);
-            equal(i.config.requireProvider.args[0][0], 'provider-a');
-            equal(i.config.requireProvider.args[1][0], 'provider-b');
-            equal(i.config.requireProvider.args[2][0], 'provider-c');
+            equal(i.config.requireProvider.args[0][0], 'a');
+            equal(i.config.requireProvider.args[1][0], 'b');
+            equal(i.config.requireProvider.args[2][0], 'c');
         }
     }));
 
@@ -78,21 +75,21 @@
 
     test('default', test_handle_request({
         setup: function(i) {
-            console.log(i);
             i.request.market = 'AS';
             i.request.country = 'JP';
             i.request.asn = 1234;
+            i.request.hostname_prefix = '';
             i.request
                 .getProbe
                 .withArgs('avail')
                 .returns({
-                    'provider-a': {
+                    'a': {
                         'avail': 99
                     },
-                    'provider-b': {
+                    'b': {
                         'avail': 100
                     },
-                    'provider-c': {
+                    'c': {
                         'avail': 100
                     }
                 });
@@ -100,20 +97,174 @@
                 .getProbe
                 .withArgs('http_rtt')
                 .returns({
-                    'provider-a': {
+                    'a': {
                         'http_rtt': 199
                     },
-                    'provider-b': {
+                    'b': {
                         'http_rtt': 201
                     },
-                    'provider-c': {
+                    'c': {
                         'http_rtt': 202
                     }
                 });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({
+                    'a': '1.00000',
+                    'b': '1.00000',
+                    'c': '1.00000'
+                });
         },
         verify: function(i) {
-            console.log(i);
-            equal(i.response.addCName.args[0][0], 'as-jp-1234.avail-len-3.99-100-100.rtt-len-3.199-201-202.example.com', 'Verifying CNAME');
+            equal(i.response.addCName.args[0][0], 'as.jp.1234.placeholder.example.com', 'Verifying CNAME');
+            equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
+        }
+    }));
+
+    test('a.http-rtt', test_handle_request({
+        setup: function(i) {
+            i.request.market = 'AS';
+            i.request.country = 'JP';
+            i.request.asn = 1234;
+            i.request.hostname_prefix = 'a.http-rtt';
+            i.request
+                .getProbe
+                .withArgs('avail')
+                .returns({
+                    'a': {
+                        'avail': 99
+                    },
+                    'b': {
+                        'avail': 100
+                    },
+                    'c': {
+                        'avail': 100
+                    }
+                });
+            i.request
+                .getProbe
+                .withArgs('http_rtt')
+                .returns({
+                    'a': {
+                        'http_rtt': 199
+                    },
+                    'b': {
+                        'http_rtt': 201
+                    },
+                    'c': {
+                        'http_rtt': 202
+                    }
+                });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({
+                    'a': '1.00000',
+                    'b': '1.00000',
+                    'c': '1.00000'
+                });
+        },
+        verify: function(i) {
+            equal(i.response.addCName.args[0][0], 'as.jp.1234.a.http-rtt.199.example.com', 'Verifying CNAME');
+            equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
+        }
+    }));
+
+    test('c.avail', test_handle_request({
+        setup: function(i) {
+            i.request.market = 'AS';
+            i.request.country = 'JP';
+            i.request.asn = 1234;
+            i.request.hostname_prefix = 'c.avail';
+            i.request
+                .getProbe
+                .withArgs('avail')
+                .returns({
+                    'a': {
+                        'avail': 99
+                    },
+                    'b': {
+                        'avail': 100
+                    },
+                    'c': {
+                        'avail': 100
+                    }
+                });
+            i.request
+                .getProbe
+                .withArgs('http_rtt')
+                .returns({
+                    'a': {
+                        'http_rtt': 199
+                    },
+                    'b': {
+                        'http_rtt': 201
+                    },
+                    'c': {
+                        'http_rtt': 202
+                    }
+                });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({
+                    'a': '1.00000',
+                    'b': '1.00000',
+                    'c': '1.00000'
+                });
+        },
+        verify: function(i) {
+            equal(i.response.addCName.args[0][0], 'as.jp.1234.c.avail.100.example.com', 'Verifying CNAME');
+            equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
+        }
+    }));
+
+    test('a.sonar', test_handle_request({
+        setup: function(i) {
+            i.request.market = 'AS';
+            i.request.country = 'JP';
+            i.request.asn = 1234;
+            i.request.hostname_prefix = 'a.sonar';
+            i.request
+                .getProbe
+                .withArgs('avail')
+                .returns({
+                    'a': {
+                        'avail': 99
+                    },
+                    'b': {
+                        'avail': 100
+                    },
+                    'c': {
+                        'avail': 100
+                    }
+                });
+            i.request
+                .getProbe
+                .withArgs('http_rtt')
+                .returns({
+                    'a': {
+                        'http_rtt': 199
+                    },
+                    'b': {
+                        'http_rtt': 201
+                    },
+                    'c': {
+                        'http_rtt': 202
+                    }
+                });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({
+                    'a': '1.00000',
+                    'b': '1.00000',
+                    'c': '1.00000'
+                });
+        },
+        verify: function(i) {
+            equal(i.response.addCName.args[0][0], 'as.jp.1234.a.sonar.1-00000.example.com', 'Verifying CNAME');
             equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
         }
     }));

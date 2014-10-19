@@ -1,8 +1,7 @@
 
 var handler = new OpenmixApplication({
     // The list of provider aliases that you want diagnosed
-    providers: [  'cloudflare', 'maxcdn', 'leap-pt', 'leap-ua', 'prome-it', 'exvm-sg' ],
-    default_ttl: 20
+    providers: [  'cloudflare', 'maxcdn', 'leap-pt', 'leap-ua', 'prome-it', 'exvm-sg' ]
 });
 
 /** @constructor */
@@ -24,47 +23,68 @@ function OpenmixApplication(settings) {
     this.handle_request = function(request, response) {
 
         var data = {},
-            override_cname = [];
+            sonar,
+            i,
+            temp,
+            hostname_prefix_parts,
+            cname_parts = [];
 
-        function flatten(obj, property) {
-            var result = {}, i;
-            for (i in obj) {
-                if (obj.hasOwnProperty(i)) {
-                    if (obj[i].hasOwnProperty(property) && obj[i][property]) {
-                        result[i] = obj[i][property];
-                    }
-                }
-            }
-            return result;
+        i = settings.providers.length;
+        while (i--) {
+            data[settings.providers[i]] = {};
         }
 
-        function get_diag_string(data) {
-            var i, result = [];
-            for (i in data) {
-                if (data.hasOwnProperty(i)) {
-                    //result.push(i);
-                    result.push(data[i]);
-                }
-            }
-            return result.join('-');
+        join_objects(data, request.getProbe('avail'), 'avail');
+        join_objects(data, request.getProbe('http_rtt'), 'http_rtt');
+        //console.log(data);
+        sonar = request.getData('sonar');
+        //console.log(sonar);
+        for (i in sonar) {
+            data[i].sonar = sonar[i];
         }
 
-        data.avail = flatten(request.getProbe('avail'), 'avail');
-        data.rtt = flatten(request.getProbe('http_rtt'), 'http_rtt');
-        // console.log('avail: ' + JSON.stringify(data.avail));
-        // console.log('rtt: ' + JSON.stringify(data.rtt));
+        if ('undefined' !== typeof request.market) {
+            cname_parts.push(request.market.toLowerCase() || 'none');
+        }
 
-        override_cname.push((request.market + '-' + request.country + '-' + request.asn).toLowerCase());
-        override_cname.push('avail-len-' + Object.keys(data.avail).length);
-        override_cname.push(get_diag_string(data.avail));
-        override_cname.push('rtt-len-' + Object.keys(data.rtt).length);
-        override_cname.push(get_diag_string(data.rtt));
-        override_cname.push('example.com');
+        if ('undefined' !== typeof request.country) {
+            cname_parts.push(request.country.toLowerCase() || 'none');
+        }
 
-        response.addCName(override_cname.join('.').replace(/_/g, '-'));
-        response.setTTL(settings.default_ttl);
+        if ('undefined' !== typeof request.asn) {
+            cname_parts.push(request.asn || 'none');
+        }
+
+        if (request.hostname_prefix) {
+            //console.log(request.hostname_prefix);
+            hostname_prefix_parts = request.hostname_prefix.split('.');
+            cname_parts.push(hostname_prefix_parts[0]);
+            cname_parts.push(hostname_prefix_parts[1]);
+            hostname_prefix_parts[1] = hostname_prefix_parts[1].replace('-', '_');
+            //console.log(hostname_prefix_parts);
+            temp = data[hostname_prefix_parts[0]][hostname_prefix_parts[1]];
+            if ('string' === typeof temp) {
+                temp = temp.replace(/[\._]/, '-');
+            }
+            cname_parts.push(temp);
+        } else {
+            cname_parts.push('placeholder');
+        }
+
+        cname_parts.push('example');
+        cname_parts.push('com');
+        response.addCName(cname_parts.join('.'));
+        response.setTTL(20);
     };
 
+    function join_objects(target, source, property) {
+        var i;
+        for (i in source) {
+            if (property in source[i]) {
+                target[i][property] = source[i][property];
+            }
+        }
+    }
 }
 
 function init(config) {
