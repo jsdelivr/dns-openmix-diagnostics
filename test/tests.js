@@ -117,7 +117,89 @@
                 });
         },
         verify: function(i) {
-            equal(i.response.addCName.args[0][0], 'as.jp.1234.placeholder.example.com', 'Verifying CNAME');
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.placeholder.example.com', 'Verifying CNAME');
+            equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
+        }
+    }));
+
+    test('default', test_handle_request({
+        setup: function(i) {
+            i.request.market = 'AS';
+            i.request.country = 'JP';
+            i.request.asn = 1234;
+            i.request.hostname_prefix = undefined;
+            i.request
+                .getProbe
+                .withArgs('avail')
+                .returns({
+                    'a': {
+                        'avail': 99
+                    },
+                    'b': {
+                        'avail': 100
+                    },
+                    'c': {
+                        'avail': 100
+                    }
+                });
+            i.request
+                .getProbe
+                .withArgs('http_rtt')
+                .returns({
+                    'a': {
+                        'http_rtt': 199
+                    },
+                    'b': {
+                        'http_rtt': 201
+                    },
+                    'c': {
+                        'http_rtt': 202
+                    }
+                });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({
+                    'a': '1.00000',
+                    'b': '1.00000',
+                    'c': '1.00000'
+                });
+        },
+        verify: function(i) {
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.placeholder.example.com', 'Verifying CNAME');
+            equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
+        }
+    }));
+
+    test('default; no data', test_handle_request({
+        setup: function(i) {
+            i.request.market = 'AS';
+            i.request.country = 'JP';
+            i.request.asn = 1234;
+            i.request.hostname_prefix = '';
+            i.request
+                .getProbe
+                .withArgs('avail')
+                .returns({
+                    'a': {},
+                    'b': {},
+                    'c': {}
+                });
+            i.request
+                .getProbe
+                .withArgs('http_rtt')
+                .returns({
+                    'a': {},
+                    'b': {},
+                    'c': {}
+                });
+            i.request
+                .getData
+                .withArgs('sonar')
+                .returns({});
+        },
+        verify: function(i) {
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.placeholder.example.com', 'Verifying CNAME');
             equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
         }
     }));
@@ -166,7 +248,7 @@
                 });
         },
         verify: function(i) {
-            equal(i.response.addCName.args[0][0], 'as.jp.1234.a.http-rtt.199.example.com', 'Verifying CNAME');
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.a.http-rtt.199.example.com', 'Verifying CNAME');
             equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
         }
     }));
@@ -215,7 +297,7 @@
                 });
         },
         verify: function(i) {
-            equal(i.response.addCName.args[0][0], 'as.jp.1234.c.avail.100.example.com', 'Verifying CNAME');
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.c.avail.100.example.com', 'Verifying CNAME');
             equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
         }
     }));
@@ -264,7 +346,7 @@
                 });
         },
         verify: function(i) {
-            equal(i.response.addCName.args[0][0], 'as.jp.1234.a.sonar.1-00000.example.com', 'Verifying CNAME');
+            equal(i.response.addCName.args[0][0], 'AS.JP.1234.a.sonar.1-00000.example.com', 'Verifying CNAME');
             equal(i.response.setTTL.args[0][0], 20, 'Verifying TTL');
         }
     }));

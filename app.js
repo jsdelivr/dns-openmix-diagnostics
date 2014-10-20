@@ -40,35 +40,31 @@ function OpenmixApplication(settings) {
         sonar = request.getData('sonar');
         //console.log(sonar);
         for (i in sonar) {
-            data[i].sonar = sonar[i];
+           data[i].sonar = sonar[i];
         }
 
-        if ('undefined' !== typeof request.market) {
-            cname_parts.push(request.market.toLowerCase() || 'none');
-        }
 
-        if ('undefined' !== typeof request.country) {
-            cname_parts.push(request.country.toLowerCase() || 'none');
-        }
+        cname_parts.push(request.market);
+        cname_parts.push(request.country);
+        cname_parts.push(request.asn);
 
-        if ('undefined' !== typeof request.asn) {
-            cname_parts.push(request.asn || 'none');
-        }
-
-        if (request.hostname_prefix) {
+        if ('xx' === request.hostname_prefix
+            || null === request.hostname_prefix
+            || 'undefined' === typeof request.hostname_prefix
+            || '' === request.hostname_prefix) {
+            cname_parts.push('placeholder');
+        } else {
             //console.log(request.hostname_prefix);
             hostname_prefix_parts = request.hostname_prefix.split('.');
             cname_parts.push(hostname_prefix_parts[0]);
             cname_parts.push(hostname_prefix_parts[1]);
             hostname_prefix_parts[1] = hostname_prefix_parts[1].replace('-', '_');
-            //console.log(hostname_prefix_parts);
+            // //console.log(hostname_prefix_parts);
             temp = data[hostname_prefix_parts[0]][hostname_prefix_parts[1]];
             if ('string' === typeof temp) {
                 temp = temp.replace(/[\._]/, '-');
             }
             cname_parts.push(temp);
-        } else {
-            cname_parts.push('placeholder');
         }
 
         cname_parts.push('example');
