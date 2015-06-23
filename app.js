@@ -1,7 +1,7 @@
 
 var handler = new OpenmixApplication({
     // The list of provider aliases that you want diagnosed
-    providers: [  'cloudflare', 'maxcdn', 'leap-pt', 'leap-ua', 'prome-it', 'exvm-sg' ]
+    providers: [  'cloudflare', 'maxcdn', 'keycdn', 'tm-mg' ]
 });
 
 /** @constructor */
